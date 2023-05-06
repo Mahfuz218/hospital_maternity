@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.DayOfWeek;
 import java.util.List;
 
 @RestController
@@ -26,6 +27,10 @@ public class PatientController {
         return taskService.getAllDisChargePatientWithin3Days();
     }
 
+    @GetMapping("/get-busiest-day-of-week")
+    public DayOfWeek getBusiestDayOfWeek() {
+        return taskService.findBusiestDayOfWeek();
+    }
 
 
 }

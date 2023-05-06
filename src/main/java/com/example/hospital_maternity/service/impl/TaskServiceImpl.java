@@ -10,10 +10,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,6 +62,36 @@ public class TaskServiceImpl implements TaskService {
         return networkService.getAllPatient().stream()
                 .filter(patientModel -> patientIds.stream().anyMatch(aLong -> Objects.equals(aLong, patientModel.getId())))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public DayOfWeek findBusiestDayOfWeek() {
+        List<AdmissionModel> allAdmissionList = networkService.getAllAdmissionList();
+        EnumSet<DayOfWeek> dayOfWeeks = EnumSet.allOf(DayOfWeek.class);
+        Map<DayOfWeek, Integer> admissionsByDayOfWeek = new HashMap<>();
+        for (DayOfWeek dayOfWeek : dayOfWeeks) {
+            admissionsByDayOfWeek.put(dayOfWeek, 0);
+        }
+
+        for (AdmissionModel admission : allAdmissionList) {
+            LocalDateTime admissionDateTime = admission.getAdmissionDate();
+            DayOfWeek dayOfWeek = admissionDateTime.getDayOfWeek();
+
+            // Increment the count of admissions for the corresponding day of the week
+            admissionsByDayOfWeek.put(dayOfWeek, admissionsByDayOfWeek.get(dayOfWeek) + 1);
+        }
+
+        // Determine which day of the week has the highest number of admissions
+        DayOfWeek busiestDayOfWeek = DayOfWeek.SATURDAY;
+        int maxAdmissions = 0;
+        for (DayOfWeek dayOfWeek : admissionsByDayOfWeek.keySet()) {
+            int admissionsCount = admissionsByDayOfWeek.get(dayOfWeek);
+            if (admissionsCount > maxAdmissions) {
+                maxAdmissions = admissionsCount;
+                busiestDayOfWeek = dayOfWeek;
+            }
+        }
+        return busiestDayOfWeek;
     }
 
     public List<AllocationModel> getEmployeeAllocation(List<AllocationModel> allocations, long empId) {
