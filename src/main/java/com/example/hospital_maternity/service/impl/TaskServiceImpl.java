@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAmount;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -70,7 +72,7 @@ public class TaskServiceImpl implements TaskService {
         EnumSet<DayOfWeek> dayOfWeeks = EnumSet.allOf(DayOfWeek.class);
         Map<DayOfWeek, Integer> admissionsByDayOfWeek = new HashMap<>();
         for (DayOfWeek dayOfWeek : dayOfWeeks) {
-            admissionsByDayOfWeek.put(dayOfWeek, 0);
+            admissionsByDayOfWeek.put(dayOfWeek, 0); // initialize every dayOfWeek with zero in the map
         }
 
         for (AdmissionModel admission : allAdmissionList) {
@@ -93,6 +95,36 @@ public class TaskServiceImpl implements TaskService {
         }
         return busiestDayOfWeek;
     }
+
+    /**
+     * Average duration (hour) of patient stays for a specific stuff.
+     * @param employeeId
+     * @return a long value in hour.
+     */
+    @Override
+    public Long averagePatientStayTimeAtStuff(long employeeId) {
+        // checking the stuff is exist or not
+        EmployeeModel stuff = networkService.getEmployeeById(employeeId);
+
+        //getting all admission id from allocations by created the stuff/employee
+        List<AllocationModel> employeeAllocation = getEmployeeAllocation(networkService.getAllAllocations(), employeeId);
+
+        // getting all admission after then getting all of patient ids from those admissions
+        double averageTime = networkService.getAllAdmissionList()
+                .stream().filter(admissionModel -> employeeAllocation.stream()
+                        .anyMatch(allocationModel -> Objects.equals(allocationModel.getAdmissionID(), admissionModel.getId())))
+                .map(admissionModel -> {
+                    long between = ChronoUnit.MILLIS.between(admissionModel.getAdmissionDate(), admissionModel.getDischargeDate());
+                    System.out.println(between);
+                    return between;
+                })
+                .mapToLong(aLong -> aLong)
+                .average()
+                .orElse(0.0);
+
+        return TimeUnit.MILLISECONDS.toHours(Double.valueOf(averageTime).longValue());
+    }
+
 
     public List<AllocationModel> getEmployeeAllocation(List<AllocationModel> allocations, long empId) {
         return allocations.stream().filter(allocationModel -> allocationModel.getEmployeeID() == empId)

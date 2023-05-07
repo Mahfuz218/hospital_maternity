@@ -11,4 +11,6 @@ public interface TaskService {
 
     DayOfWeek findBusiestDayOfWeek();
 
+    Long averagePatientStayTimeAtStuff(long employeeId);
+
 }
